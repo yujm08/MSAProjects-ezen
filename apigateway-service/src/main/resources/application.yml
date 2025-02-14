@@ -41,3 +41,17 @@ spring:
           predicates:
           - Path=/user-service/**
           - Method=GET
+          filters:
+          - RemoveRequestHeader=Cookie
+          - RewritePath=/user-service/(?<segment>.*), /$\{segment}
+          - AuthorizationHeaderFilter
+
+token: 
+  secret: user_token
+
+logging:
+  level:
+    com.example.apigateway_service: DEBUG
+    org.springframework.cloud.gateway: DEBUG
+    org.springframework.security: DEBUG
+    reactor.netty: DEBUG

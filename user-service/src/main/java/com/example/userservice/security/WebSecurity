@@ -33,22 +33,25 @@ public class WebSecurity {
         AuthenticationManager authenticationManager = authenticationManagerBuilder.build();
         http.authenticationManager(authenticationManager);
         
-        http.csrf(csrf -> csrf.disable())
-            .authorizeHttpRequests(authz -> authz
+        http
+        .csrf(csrf -> csrf.disable())
+        .authorizeHttpRequests(authz -> authz
+            .requestMatchers(new AntPathRequestMatcher("/actuator/**")).permitAll()
+            .requestMatchers(new AntPathRequestMatcher("/h2-console/**")).permitAll()
+            .requestMatchers(new AntPathRequestMatcher("/users/**", "POST")).permitAll()
+            .requestMatchers(new AntPathRequestMatcher("/welcome")).permitAll()
+            .requestMatchers(new AntPathRequestMatcher("/health-check")).permitAll()
             .requestMatchers("/**").access(
-                new WebExpressionAuthorizationManager("hasIpAddress('127.0.0.1') or hasIpAddress('192.168.0.47')"))
-                .anyRequest().authenticated()
-            )
-            .headers(headers -> headers.frameOptions().sameOrigin());
+                new WebExpressionAuthorizationManager("hasIpAddress('localhost') or hasIpAddress('127.0.0.1') or hasIpAddress('192.168.0.0/16')"))
+            .anyRequest().authenticated()
+        )
         
         http.addFilter(getAuthenticationFilter(authenticationManager));
         
         return http.build();
     }
     
-    private AuthenticationFilter getAuthenticationFilter(AuthenticationManager authenticationManager) {
-        AuthenticationFilter authenticationFilter = new AuthenticationFilter();
-        authenticationFilter.setAuthenticationManager(authenticationManager);
-        return authenticationFilter;
+    private AuthenticationFilterNew getAuthenticationFilter(AuthenticationManager authenticationManager) throws Exception {
+        return new AuthenticationFilter(authenticationManager, userService, env);
     }
 }

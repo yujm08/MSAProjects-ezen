@@ -33,7 +33,7 @@ public class UserController {
         this.userService = userService;
     }
 
-    @GetMapping("/health_check")
+    @GetMapping("/health-check")
     public String status() {
         return "It's Working in User Service on PORT " + env.getProperty("local.server.port");
     }
