@@ -35,23 +35,30 @@ public class WebSecurity {
         
         http
         .csrf(csrf -> csrf.disable())
+        .sessionManagement(session -> session
+        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))  // 세션 정책 추가
         .authorizeHttpRequests(authz -> authz
-            .requestMatchers(new AntPathRequestMatcher("/actuator/**")).permitAll()
-            .requestMatchers(new AntPathRequestMatcher("/h2-console/**")).permitAll()
-            .requestMatchers(new AntPathRequestMatcher("/users/**", "POST")).permitAll()
-            .requestMatchers(new AntPathRequestMatcher("/welcome")).permitAll()
-            .requestMatchers(new AntPathRequestMatcher("/health-check")).permitAll()
-            .requestMatchers("/**").access(
-                new WebExpressionAuthorizationManager("hasIpAddress('localhost') or hasIpAddress('127.0.0.1') or hasIpAddress('192.168.0.0/16')"))
-            .anyRequest().authenticated()
+        .requestMatchers("/actuator/**").permitAll()
+        .requestMatchers("/users/**").permitAll()  // 회원가입 경로 허용
+        .requestMatchers("/welcome").permitAll()
+        .requestMatchers("/health-check").permitAll()
+        .requestMatchers("/login").permitAll()
+        .anyRequest().authenticated()
         )
         
         http.addFilter(getAuthenticationFilter(authenticationManager));
+        http.headers(headers -> headers.frameOptions(frameOptions -> frameOptions.disable())); //DB 사용시 필요
         
         return http.build();
     }
     
-    private AuthenticationFilterNew getAuthenticationFilter(AuthenticationManager authenticationManager) throws Exception {
-        return new AuthenticationFilter(authenticationManager, userService, env);
+    // private AuthenticationFilterNew getAuthenticationFilter(AuthenticationManager authenticationManager) throws Exception {
+    //     return new AuthenticationFilter(authenticationManager, userService, env);
+    // }
+
+    private AuthenticationFilter getAuthenticationFilter(AuthenticationManager authenticationManager) throws Exception {
+        AuthenticationFilter authenticationFilter = new AuthenticationFilter(authenticationManager, userService, env);
+        authenticationFilter.setFilterProcessesUrl("/login");  // 로그인 URL 설정
+        return authenticationFilter;
     }
 }
