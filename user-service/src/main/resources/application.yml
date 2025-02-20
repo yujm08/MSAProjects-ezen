@@ -39,4 +39,4 @@ logging:
 
 token:
   expiration_time: 86400000
-  secret: user_token
+  secret: user_token1234567891012345678910
