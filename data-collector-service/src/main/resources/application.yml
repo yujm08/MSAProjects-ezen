@@ -1,0 +1,32 @@
+server:
+  port: 7000
+
+spring: 
+  application: 
+    name: data-collector-service
+
+
+  datasource:
+    driver-class-name: org.mariadb.jdbc.Driver
+    url: jdbc:mariadb://localhost:3306/datacollector_db?createDatabaseIfNotExist=true
+    username: root
+    password: 1234
+    
+  h2:
+    console:
+      enabled: true #H2 콘솔을 활성화하여 브라우저에서 DB 상태 확인 가능
+      path: /h2-console
+      settings:
+        web-allow-others: true
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://localhost:8761/eureka/

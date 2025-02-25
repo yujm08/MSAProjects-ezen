@@ -9,6 +9,7 @@ import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -76,6 +77,37 @@ public class UserController {
         ResponseUser result = new ModelMapper().map(userDto, ResponseUser.class);
 
         return ResponseEntity.status(HttpStatus.OK).body(result);
+    }
+
+    @PatchMapping("/users/{userId}/password") //아이디에 대해 변경 전과 후의 비밀번호를 받아 비밀번호 변경
+    public ResponseEntity<?> changeUserPassword(
+            @PathVariable("userId") String userId,
+            @RequestBody ChangePasswordRequest request
+    ) {
+        userService.changePassword(userId, request.getOldPassword(), request.getNewPassword());
+        return ResponseEntity.ok().build(); // 200 OK
+    }
+
+    // 비밀번호 변경용 DTO(요청 바디용)
+    static class ChangePasswordRequest {
+        private String oldPassword;
+        private String newPassword;
+        
+        public String getOldPassword() {
+            return oldPassword;
+        }
+
+        public void setOldPassword(String oldPassword) {
+            this.oldPassword = oldPassword;
+        }
+
+        public String getNewPassword() {
+            return newPassword;
+        }
+
+        public void setNewPassword(String newPassword) {
+            this.newPassword = newPassword;
+        }
     }
 
 

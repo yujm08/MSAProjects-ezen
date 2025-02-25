@@ -2,9 +2,6 @@ package com.example.userservice.dto;
 
 import java.util.Date;
 import java.util.List;
-
-import com.example.userservice.vo.ResponseOrder;
-
 import lombok.Data;
 
 @Data
@@ -16,5 +13,6 @@ public class UserDto {
     private Date createdAt;
     private String encryptedPwd;
 
-    private List<ResponseOrder> orders;
+    // 추가: 역할 정보 (예: ["ROLE_USER", "ROLE_ADMIN"])
+    private List<String> roles;
 }

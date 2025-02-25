@@ -1,5 +1,6 @@
 server:
-  port: 0
+  port: 8081
+
 
 spring:
   application:
@@ -25,18 +26,22 @@ spring:
 
 eureka:
   instance:
-    instance-id: ${spring.application.name}:${spring.application.instance_id:${random.value}}
-
-  client:
-    register-with-eureka: true
-    fetch-registry: true
-    service-url:
-      defaultZone: http://127.0.0.1:8761/eureka
+    prefer-ip-address: true  # IP 주소를 우선 등록
+    ip-address: 127.0.0.1  # 또는 실제 IP (예: 192.168.0.53)
+    non-secure-port-enabled: true  #HTTP(기본 80/8080) 포트는 사용 안 함
+    secure-port-enabled: false   # Eureka에서 HTTP 사용하도록 설정
+    instance-id: ${spring.application.name}:${random.value}
+    status-page-url: http://127.0.0.1:8081/actuator/info
+    health-check-url: http://127.0.0.1:8081/health-check
+    home-page-url: http://127.0.0.1:8081/
+    metadata-map:
+      protocol: http
 
 logging:
   level:
     org.springframework: DEBUG  # Spring 관련 로그를 DEBUG로 설정
 
 token:
-  expiration_time: 86400000
-  secret: user_token1234567891012345678910
+  secret: "YourSuperSecretKey123456789019141914"  # 실제 운영 환경에서는 더욱 안전한 키를 사용해야 함
+  expiration_time: 900000      # Access Token 유효기간: 15분 (15 * 60 * 1000 = 900,000 ms)
+  refresh_expiration_time: 604800000  # Refresh Token 유효기간: 7일 (7 * 24 * 60 * 60 * 1000 = 604,800,000 ms)

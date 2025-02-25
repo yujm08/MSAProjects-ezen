@@ -16,6 +16,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.expression.WebExpressionAuthorizationManager;
 import org.springframework.security.web.access.intercept.RequestAuthorizationContext;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.IpAddressMatcher;
 
@@ -27,15 +28,17 @@ public class WebSecurity {
     private UserService userService;
     private BCryptPasswordEncoder bCryptPasswordEncoder;
     private Environment env;
+    private JwtTokenUtil jwtTokenUtil;
 
     public static final String ALLOWED_IP_ADDRESS = "127.0.0.1";
     public static final String SUBNET = "/32";
     public static final IpAddressMatcher ALLOWED_IP_ADDRESS_MATCHER = new IpAddressMatcher(ALLOWED_IP_ADDRESS + SUBNET);
 
-    public WebSecurity(Environment env, UserService userService, BCryptPasswordEncoder bCryptPasswordEncoder) {
+    public WebSecurity(Environment env, UserService userService, BCryptPasswordEncoder bCryptPasswordEncoder, JwtTokenUtil jwtTokenUtil) {
         this.env = env;
         this.userService = userService;
         this.bCryptPasswordEncoder = bCryptPasswordEncoder;
+        this.jwtTokenUtil = jwtTokenUtil;
         System.out.println("WebSecurity 생성자 주입");
     }
 
@@ -48,9 +51,11 @@ public class WebSecurity {
 
         AuthenticationManager authenticationManager = authenticationManagerBuilder.build();
 
+        // CSRF 비활성화
         http.csrf( (csrf) -> csrf.disable());
 //        http.csrf(AbstractHttpConfigurer::disable);
 
+        // 권한 부여 정책
         http.authorizeHttpRequests((authz) -> authz
                         .requestMatchers(new AntPathRequestMatcher("/actuator/**")).permitAll()
                         .requestMatchers(new AntPathRequestMatcher("/h2-console/**")).permitAll()
@@ -67,8 +72,11 @@ public class WebSecurity {
                 )
                 .authenticationManager(authenticationManager)
                 .sessionManagement((session) -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)); // 세션 사용 안 함 (JWT이므로)
+                        // 1) 로그인 시도(아이디/비번) -> AuthenticationFilter
+                        // 2) 모든 요청에 대한 쿠키 JWT 검증 -> JwtAuthorizationFilter
                         http.addFilter(getAuthenticationFilter(authenticationManager));
+                        http.addFilterBefore(new JwtAuthorizationFilter(env, jwtTokenUtil), UsernamePasswordAuthenticationFilter.class);
                         http.headers((headers) -> headers.frameOptions((frameOptions) -> frameOptions.sameOrigin()));
                 
                         return http.build();
@@ -79,6 +87,6 @@ public class WebSecurity {
     }
 
     private AuthenticationFilter getAuthenticationFilter(AuthenticationManager authenticationManager) throws Exception {
-        return new AuthenticationFilter(authenticationManager, userService, env);
+        return new AuthenticationFilter(authenticationManager, userService, env, jwtTokenUtil);
     }
 }

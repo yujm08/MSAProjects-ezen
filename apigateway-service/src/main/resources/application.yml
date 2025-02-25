@@ -1,5 +1,10 @@
 server:
-  port: 8000
+  port: 8443
+  ssl:
+    key-store: classpath:ssl/gateway-keystore.p12
+    key-store-password: 1234
+    key-store-type: PKCS12
+    key-alias: gatewaylocalssl  # 실제 alias와 동일하게
 
 eureka:
   client:
@@ -13,13 +18,20 @@ spring:
     name: apigateway-service
   cloud:
     gateway:
+      discovery:
+        locator:
+          enabled: true   # Eureka에서 동적으로 서비스 찾기
+          lower-case-service-id: true  # 서비스 ID를 소문자로 변환 (Eureka 기본 설정에 맞춤)
+          default-filters:
+            - name: SetRequestHeader
+              args:
+                X-Forwarded-Proto: https  # ✅ 추가 (Eureka에서 HTTPS를 찾도록)
+      httpclient:
+        ssl:
+          useInsecureTrustManager: true  # self-signed 인증서 신뢰 (개발 환경용)
       routes:
-        # - id: user-service
-        #   uri: lb://USER-SERVICE #유레카에 등록된 이름
-        #   predicates:
-        #   - Path=/user-service/**
         - id: user-service-login
-          uri: lb://USER-SERVICE
+          uri: lb://user-service
           predicates:
           - Path=/user-service/login
           - Method=POST
@@ -28,7 +40,7 @@ spring:
           - RewritePath=/user-service/(?<segment>.*), /$\{segment}
         
         - id: user-service-users
-          uri: lb://USER-SERVICE
+          uri: lb://user-service
           predicates:
           - Path=/user-service/users
           - Method=POST
@@ -37,14 +49,23 @@ spring:
           - RewritePath=/user-service/(?<segment>.*), /$\{segment}
         
         - id: user-service-get
-          uri: lb://USER-SERVICE
+          uri: lb://user-service
           predicates:
           - Path=/user-service/**
           - Method=GET
           filters:
           - RemoveRequestHeader=Cookie
           - RewritePath=/user-service/(?<segment>.*), /$\{segment}
-          - AuthorizationHeaderFilter
+          - AuthorizationHeaderFilter 
+
+
+        - id: data-collector-service-route
+          uri: lb://data-collector-service
+          predicates:
+            - Path=/data-collector-service/**
+          filters:
+            - RemoveRequestHeader=Cookie
+            - RewritePath=/data-collector-service/(?<segment>.*), /${segment}
 
 token: 
   secret: user_token
