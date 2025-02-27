@@ -1,6 +1,5 @@
 package com.example.userservice.service;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -22,7 +21,6 @@ import com.example.userservice.jpa.RoleEntity;
 import com.example.userservice.jpa.RoleRepository;
 import com.example.userservice.jpa.UserEntity;
 import com.example.userservice.jpa.UserRepository;
-import com.example.userservice.vo.ResponseOrder;
 
 import jakarta.persistence.EntityNotFoundException;
 

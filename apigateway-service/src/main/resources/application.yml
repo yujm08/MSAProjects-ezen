@@ -11,21 +11,30 @@ eureka:
     register-with-eureka: true
     fetch-registry: true
     service-url:
-        defaultZone: http://localhost:8761/eureka/
+      defaultZone: http://localhost:8761/eureka/
 
 spring:
   application:
     name: apigateway-service
   cloud:
     gateway:
+      # 전역 CORS 설정 추가
+      globalcors:
+        add-to-simple-url-handler-mapping: true
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins: "http://localhost:3000"
+            allowedMethods: "*"  # 허용할 HTTP 메서드 목록
+            allowedHeaders: "*"  # 클라이언트가 보내는 헤더를 허용할 목록
+            allowCredentials: true  # 쿠키를 포함한 요청 허용
       discovery:
         locator:
-          enabled: true   # Eureka에서 동적으로 서비스 찾기
-          lower-case-service-id: true  # 서비스 ID를 소문자로 변환 (Eureka 기본 설정에 맞춤)
+          enabled: true              # Eureka에서 동적으로 서비스 찾기
+          lower-case-service-id: true  # 서비스 ID를 소문자로 변환
           default-filters:
             - name: SetRequestHeader
               args:
-                X-Forwarded-Proto: https  # ✅ 추가 (Eureka에서 HTTPS를 찾도록)
+                X-Forwarded-Proto: https  # HTTPS 프로토콜 전달
       httpclient:
         ssl:
           useInsecureTrustManager: true  # self-signed 인증서 신뢰 (개발 환경용)
@@ -33,40 +42,36 @@ spring:
         - id: user-service-login
           uri: lb://user-service
           predicates:
-          - Path=/user-service/login
-          - Method=POST
+            - Path=/user-service/login
+            - Method=POST
           filters:
-          - RemoveRequestHeader=Cookie
-          - RewritePath=/user-service/(?<segment>.*), /$\{segment}
-        
+            # 쿠키가 인증에 필요하다면 RemoveRequestHeader=Cookie 필터는 제거하거나 주석처리합니다.
+            #- RemoveRequestHeader=Cookie
+            - RewritePath=/user-service/(?<segment>.*), /${segment}
         - id: user-service-users
           uri: lb://user-service
           predicates:
-          - Path=/user-service/users
-          - Method=POST
+            - Path=/user-service/users
+            - Method=POST
           filters:
-          - RemoveRequestHeader=Cookie
-          - RewritePath=/user-service/(?<segment>.*), /$\{segment}
-        
+            #- RemoveRequestHeader=Cookie
+            - RewritePath=/user-service/(?<segment>.*), /${segment}
         - id: user-service-get
           uri: lb://user-service
           predicates:
-          - Path=/user-service/**
-          - Method=GET
+            - Path=/user-service/**
+            - Method=GET
           filters:
-          - RemoveRequestHeader=Cookie
-          - RewritePath=/user-service/(?<segment>.*), /$\{segment}
-          - AuthorizationHeaderFilter 
-
-
+            #- RemoveRequestHeader=Cookie
+            - RewritePath=/user-service/(?<segment>.*), /${segment}
+            - AuthorizationHeaderFilter
         - id: data-collector-service-route
           uri: lb://data-collector-service
           predicates:
             - Path=/data-collector-service/**
           filters:
-            - RemoveRequestHeader=Cookie
+            #- RemoveRequestHeader=Cookie
             - RewritePath=/data-collector-service/(?<segment>.*), /${segment}
-
 token: 
   secret: user_token
 

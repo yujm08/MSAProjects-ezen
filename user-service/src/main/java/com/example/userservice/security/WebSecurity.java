@@ -75,6 +75,9 @@ public class WebSecurity {
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)); // 세션 사용 안 함 (JWT이므로)
                         // 1) 로그인 시도(아이디/비번) -> AuthenticationFilter
                         // 2) 모든 요청에 대한 쿠키 JWT 검증 -> JwtAuthorizationFilter
+
+                        http.logout(logout -> logout.disable());
+
                         http.addFilter(getAuthenticationFilter(authenticationManager));
                         http.addFilterBefore(new JwtAuthorizationFilter(env, jwtTokenUtil), UsernamePasswordAuthenticationFilter.class);
                         http.headers((headers) -> headers.frameOptions((frameOptions) -> frameOptions.sameOrigin()));
