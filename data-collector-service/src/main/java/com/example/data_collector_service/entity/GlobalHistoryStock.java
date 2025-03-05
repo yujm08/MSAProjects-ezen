@@ -22,19 +22,23 @@ public class GlobalHistoryStock {
     @Column(name = "global_daily_stock_id", nullable = false)
     private Long globalDailyStockId;
 
-    // 주식 코드 (Data Body 키: ticker)
+    // 종목 코드
     @Column(name = "stock_code", length = 10, nullable = false)
     private String stockCode;
 
-    // 주식 이름 (Data Body 키: name)
+    // 종목 이름
     @Column(name = "stock_name", length = 50, nullable = false)
     private String stockName;
 
-    // 종가 (마감 가격, Data Body 키: c, DECIMAL(10,4))
+    // 거래소 코드
+    @Column(name = "exchange_code", length = 10)
+    private String exchangeCode;
+
+    // 종가
     @Column(name = "closing_price", precision = 10, scale = 4, nullable = false)
     private BigDecimal closingPrice;
 
-    // 데이터 수집 날짜 (Data Body 키: t; Unix Timestamp → DATE 변환 필요)
+    // 데이터 수집 날짜 (Unix Timestamp → DATE 변환 필요)
     @Column(name = "timestamp", nullable = false)
     private LocalDate timestamp;
 }

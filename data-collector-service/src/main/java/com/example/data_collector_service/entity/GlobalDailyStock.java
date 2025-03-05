@@ -20,15 +20,19 @@ public class GlobalDailyStock {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // 주식 코드 (Data Body 키: ticker)
+    // 종목 코드
     @Column(name = "stock_code", length = 10, nullable = false)
     private String stockCode;
 
-    // 주식 이름 (Data Body 키: name)
+    // 종목 이름
     @Column(name = "stock_name", length = 50, nullable = false)
     private String stockName;
 
-    // 현재 가격 (Data Body 키: c, close price) DECIMAL(10,4)
+    // 거래소 코드
+    @Column(name = "exchange_code", length = 10)
+    private String exchangeCode;
+
+    // 현재 가격
     @Column(name = "current_price", precision = 10, scale = 4, nullable = false)
     private BigDecimal currentPrice;
 

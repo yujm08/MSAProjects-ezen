@@ -30,3 +30,18 @@ eureka:
     fetch-registry: true
     service-url:
       defaultZone: http://localhost:8761/eureka/
+
+kis:
+  app-key: PSIa8nglBx4NPtcFEoS3kAqCokNf5DFSuFzL        # 모의 투자용 발급 받은 APP KEY
+  app-secret: 8JvIJLzcBum/nArI6ZiqDVmO00S608hFqg8TpMfqdiRGnC8Qd+syEc7K9MuxmevOc/960hH0cmS+FKtcofLnIszhrfVS92EFQM1La2w0sj3uuan/Susrz9jXtolNIzDiPoLuuMV6jZMgoJZf5klQ5UOS6aiXxlHqQbWPgVOJZ4kMK4zlrMY=  # 모의 투자용 발급 받은 APP SECRET
+  # 모의 투자 URL 설정 (실전 투자 URL과 다름!)
+  ws-url-domestic: ws://ops.koreainvestment.com:31000    # 모의 투자 국내 주식 웹소켓
+  ws-url-overseas: ws://ops.koreainvestment.com:31000    # 모의 투자 해외 주식 웹소켓
+  rest-url: https://openapivts.koreainvestment.com:29443 # 모의 투자용 REST API URL
+  # 해외 주식 현재체결가(v1_해외주식-009) 전용 URL (가령 의미 구분용)
+  overseas-api-url: "https://openapivts.koreainvestment.com:29443/uapi/overseas-price/v1/quotations/price"
+
+twelvedata:
+  websocket-url: wss://ws.twelvedata.com/v1/price
+  rest-url: https://api.twelvedata.com
+  api-key: a320884e9cc842deb7e2a8058284581d

@@ -44,7 +44,7 @@
             <artifactId>mariadb-java-client</artifactId>
         </dependency>
 
-        <!--h2 Driver-->
+        <!-- H2 Database (Runtime) -->
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
@@ -68,20 +68,20 @@
             <artifactId>feign-micrometer</artifactId>
         </dependency>
 
-        <!-- Lombok -->
+        <!-- Lombok (코드 보일러플레이트 최소화를 위한 라이브러리) -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <optional>true</optional>
         </dependency>
 
-        <!-- Validation -->
+        <!-- Jakarta Validation API -->
         <dependency>
             <groupId>jakarta.validation</groupId>
             <artifactId>jakarta.validation-api</artifactId>
         </dependency>
 
-        <!-- DevTools & Test -->
+        <!-- Spring Boot DevTools & Test -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-devtools</artifactId>
@@ -94,26 +94,46 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- (Optional) Actuator -->
+        <!-- Spring Boot Actuator (애플리케이션 모니터링, 선택 사항) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
 
-        <!-- (Optional) Scheduling - Spring Boot Starter에 기본 포함됨 
-             별도 dependency 필요 없지만 명시적으로 적어둘 수도 있음 -->
-        <!-- <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter</artifactId>
-        </dependency> -->
-
-        <!-- (Optional) Swagger/OpenAPI -->
+        <!-- Swagger/OpenAPI (API 문서화, 선택 사항) -->
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
             <version>2.2.0</version>
         </dependency>
 
+        <!-- 추가 라이브러리: OkHttp (WebSocket 클라이언트 구현용) -->
+        <dependency>
+            <groupId>com.squareup.okhttp3</groupId>
+            <artifactId>okhttp</artifactId>
+            <version>4.11.0</version>
+        </dependency>
+
+        <!-- 추가 라이브러리: Gson (JSON 직렬화/역직렬화용) -->
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>2.10</version>
+        </dependency>
+
+        <!-- org.json (JSON 파싱용) -->
+        <dependency>
+            <groupId>org.json</groupId>
+            <artifactId>json</artifactId>
+            <version>20230618</version>
+        </dependency>
+
+        <!-- 추가 라이브러리: BouncyCastle Provider (AES 등 암호화 기능, 선택 사항) -->
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcprov-jdk15on</artifactId>
+            <version>1.70</version>
+        </dependency>
     </dependencies>
 
     <dependencyManagement>

@@ -76,6 +76,8 @@ public class WebSecurity {
                         // 1) 로그인 시도(아이디/비번) -> AuthenticationFilter
                         // 2) 모든 요청에 대한 쿠키 JWT 검증 -> JwtAuthorizationFilter
 
+                        http.httpBasic(httpBasic -> httpBasic.disable()); //기본 인증(Basic Auth) 비활성화
+
                         http.logout(logout -> logout.disable());
 
                         http.addFilter(getAuthenticationFilter(authenticationManager));

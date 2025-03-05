@@ -24,9 +24,13 @@ public class KoreanDailyStock {
     @Column(name = "stock_code", length = 10, nullable = false)
     private String stockCode;
 
-    // 주식 이름 (업종 데이터 참조)
+    // 주식 이름 (마스터 데이터 참조)
     @Column(name = "stock_name", length = 50, nullable = false)
     private String stockName;
+
+    // 거래소 코드 (예: "KRX" 고정)
+    @Column(name = "exchange_code", length = 10)
+    private String exchangeCode;
 
     // 현재 가격 (Data Body 키: STCK_PRPR, DECIMAL(10,4))
     @Column(name = "current_price", precision = 10, scale = 4, nullable = false)
@@ -39,4 +43,5 @@ public class KoreanDailyStock {
     // 데이터 수집 시각 (Data Body 키: STCK_CNTG_HOUR; 변환 필요)
     @Column(name = "timestamp", nullable = false)
     private LocalDateTime timestamp;
+
 }
