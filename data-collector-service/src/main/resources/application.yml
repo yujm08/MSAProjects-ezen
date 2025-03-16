@@ -42,6 +42,6 @@ kis:
   overseas-api-url: "https://openapivts.koreainvestment.com:29443/uapi/overseas-price/v1/quotations/price"
 
 twelvedata:
-  websocket-url: wss://ws.twelvedata.com/v1/price
+  websocket-url: wss://ws.twelvedata.com/v1/quotes/price
   rest-url: https://api.twelvedata.com
   api-key: a320884e9cc842deb7e2a8058284581d

@@ -28,10 +28,6 @@ public class KoreanDailyStock {
     @Column(name = "stock_name", length = 50, nullable = false)
     private String stockName;
 
-    // 거래소 코드 (예: "KRX" 고정)
-    @Column(name = "exchange_code", length = 10)
-    private String exchangeCode;
-
     // 현재 가격 (Data Body 키: STCK_PRPR, DECIMAL(10,4))
     @Column(name = "current_price", precision = 10, scale = 4, nullable = false)
     private BigDecimal currentPrice;

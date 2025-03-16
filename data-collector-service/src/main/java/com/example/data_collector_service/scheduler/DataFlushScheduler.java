@@ -33,7 +33,7 @@ public class DataFlushScheduler {
     @Scheduled(cron = "*/20 * * * * *", zone = "Asia/Seoul")  // 매 20초마다 실행
     public void flushKoreanData() {
         if (!MarketTimeChecker.isKoreanMarketOpen()) {
-            log.info("국내 정규장이 아니므로 국내 데이터 flush를 건너뜁니다.");
+            log.info("[OverseasStockScheduler] 국내 시장 정규장이 아니므로 국내 데이터 호출 생략");
             return;
         }
 
@@ -48,15 +48,27 @@ public class DataFlushScheduler {
         }
     }
 
-    //해외 주식 REST API 데이터 저장 스케줄러
-    @Scheduled(cron = "*/20 * * * * *", zone = "Asia/Seoul")  // 매 20초마다 실행
-    public void fetchGlobalData() {
-        if (MarketTimeChecker.isGlobalMarketOpen()) {
-            log.info("[OverseasStockScheduler] 글로벌 시장 정규장, REST API 호출 시작");
-            stockCollectorService.fetchAllOverseasStocks();
-            log.info("[OverseasStockScheduler] REST API 호출 완료");
+    // 해외 글로벌 시장(미국 등) REST API 데이터 저장 스케줄러
+    @Scheduled(cron = "*/20 * * * * *", zone = "Asia/Seoul")
+    public void fetchGlobalMarketData() {
+        if (MarketTimeChecker.isUSMarketOpen()) {
+            log.info("[OverseasStockScheduler] 미국 시장 정규장, REST API 호출 시작");
+            stockCollectorService.fetchAllOverseasStocksForGlobal();
+            log.info("[OverseasStockScheduler] 미국 시장 REST API 호출 완료");
         } else {
-            log.info("[OverseasStockScheduler] 글로벌 시장 정규장이 아니므로 호출 생략");
+            log.info("[OverseasStockScheduler] 미국 시장 정규장이 아니므로 글로벌 데이터 호출 생략");
+        }
+    }
+
+    // 해외 홍콩 시장 REST API 데이터 저장 스케줄러
+    @Scheduled(cron = "*/20 * * * * *", zone = "Asia/Seoul")
+    public void fetchHongKongMarketData() {
+        if (MarketTimeChecker.isHongKongMarketOpen()) {
+            log.info("[OverseasStockScheduler] 홍콩 시장 정규장, REST API 호출 시작");
+            stockCollectorService.fetchAllOverseasStocksForHongKong();
+            log.info("[OverseasStockScheduler] 홍콩 시장 REST API 호출 완료");
+        } else {
+            log.info("[OverseasStockScheduler] 홍콩 시장 정규장이 아니므로 홍콩 데이터 호출 생략");
         }
     }
 }

@@ -1,13 +1,11 @@
 package com.example.data_collector_service.service;
 
 import com.example.data_collector_service.entity.GlobalDailyStock;
-import com.example.data_collector_service.repository.GlobalDailyStockRepository;
-
-import jakarta.annotation.PostConstruct;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
@@ -16,6 +14,7 @@ import org.springframework.web.client.RestTemplate;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -23,10 +22,9 @@ import java.util.List;
 public class GlobalStockApiService {
 
     private final RestTemplate restTemplate;
-    private final DailyStockService dailyStockService; // 해외 데이터 최종 저장 시 사용
-    private final OAuthApprovalService oAuthApprovalService;
+    private final DailyStockService dailyStockService;
+    private final OAuthTokenService oAuthTokenService;
 
-    // [application.yml]에서 주입받는 값들
     @Value("${kis.app-key}")
     private String appKey;
 
@@ -36,17 +34,19 @@ public class GlobalStockApiService {
     @Value("${kis.overseas-api-url}")
     private String overseasApiUrl;
 
-    private String accessToken; 
+    // 기존 accessToken 멤버 변수는 제거하고, 매 API 호출 시 최신 토큰을 가져옵니다.
+    // private String accessToken; 
 
-    // Bean 초기화 후 accessToken 초기화
     @PostConstruct
     public void init() {
-        this.accessToken = oAuthApprovalService.getApprovalKey();
-        log.info("GlobalStockApiService: accessToken 초기화 완료");
+        // 기존에는 여기서 토큰을 한번 받아 저장했으나, 5시간마다 새로 발급받기 위해 매 호출 시 oAuthTokenService.getAccessToken()을 사용합니다.
+        // 그래서 초기화 시 단순 로그만 남깁니다.
+        log.info("GlobalStockApiService: 초기화 완료 (토큰은 매 API 호출 시 갱신)");
     }
+
     /**
-     * 1) 하드코딩된 해외 종목 목록 (20개)
-     *    - "exchangeCode"는 EXCD (예: NAS, NYS, HKS 등)
+     * 하드코딩된 해외 종목 목록 (20개)
+     * "exchangeCode"는 EXCD (예: NAS, NYS, HKS 등)
      */
     private static final List<ForeignStockInfo> FOREIGN_STOCKS = List.of(
             new ForeignStockInfo("TSLA",  "테슬라",         "NAS"),
@@ -58,7 +58,7 @@ public class GlobalStockApiService {
             new ForeignStockInfo("META",  "메타(페이스북)", "NAS"),
             new ForeignStockInfo("AMD",   "AMD",           "NAS"),
             new ForeignStockInfo("NFLX",  "넷플릭스",       "NAS"),
-            new ForeignStockInfo("BRK.B", "버크셔B주",      "NYS"),
+            new ForeignStockInfo("BRK/B", "버크셔B주",      "NYS"),
             new ForeignStockInfo("TSM",   "TSMC",          "NYS"),
             new ForeignStockInfo("BABA",  "알리바바",       "NYS"),
             new ForeignStockInfo("NIO",   "니오(중국전기차)", "NYS"),
@@ -66,35 +66,54 @@ public class GlobalStockApiService {
             new ForeignStockInfo("KO",    "코카콜라",       "NYS"),
             new ForeignStockInfo("JPM",   "JP모건",         "NYS"),
             new ForeignStockInfo("V",     "비자",           "NYS"),
-            new ForeignStockInfo("9988.HK","알리바바(홍콩)","HKS"),
-            new ForeignStockInfo("9618.HK","징둥닷컴",       "HKS"),
-            new ForeignStockInfo("700.HK","텐센트",         "HKS")
+            new ForeignStockInfo("09988","알리바바(홍콩)","HKS"),
+            new ForeignStockInfo("09618","징둥닷컴",       "HKS"),
+            new ForeignStockInfo("00700","텐센트",         "HKS")
     );
 
     /**
-     * 2) 해외 종목 전체 조회 메소드
-     *    - for문을 돌면서 각 종목에 대해 REST API 호출
-     *    - 응답(JSON)을 파싱 후 DB에 저장
+     * 해외 종목 전체 조회 메소드 (시장 타입별)
+     * marketType: "GLOBAL"이면 HKS 제외, "HKS"이면 홍콩 종목만 조회
      */
-    public void fetchAllForeignStocks() {
-        for (ForeignStockInfo stock : FOREIGN_STOCKS) {
+    public void fetchForeignStocksByMarket(String marketType) {
+        List<ForeignStockInfo> stocksToFetch;
+        if ("HKS".equalsIgnoreCase(marketType)) {
+            stocksToFetch = FOREIGN_STOCKS.stream()
+                    .filter(stock -> "HKS".equalsIgnoreCase(stock.getExchangeCode()))
+                    .collect(Collectors.toList());
+        } else if ("GLOBAL".equalsIgnoreCase(marketType)) {
+            stocksToFetch = FOREIGN_STOCKS.stream()
+                    .filter(stock -> !"HKS".equalsIgnoreCase(stock.getExchangeCode()))
+                    .collect(Collectors.toList());
+        } else {
+            stocksToFetch = FOREIGN_STOCKS;
+        }
+
+        for (ForeignStockInfo stock : stocksToFetch) {
             try {
+                // 호출 제한 대응: 0.5초 대기 (모의투자의 경우 1초당 2건 제한)
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                }
+
                 // API 문서에 따르면: 
                 // QueryParam: AUTH="", EXCD=거래소코드, SYMB=종목코드
                 // ex) ?AUTH=&EXCD=NAS&SYMB=TSLA
                 String url = overseasApiUrl + "?AUTH=&EXCD={excd}&SYMB={symb}";
 
-                // HTTP Header 설정
-                HttpHeaders headers = new HttpHeaders();
-                headers.setContentType(MediaType.APPLICATION_JSON);
-                // 인증: "Bearer xxxxx" 형태로 지정
-                headers.set("authorization", accessToken);
-                // 필수 헤더
-                headers.set("appkey", appKey);
+                HttpHeaders headers = new HttpHeaders();  // HTTP Header 설정
+                headers.setContentType(MediaType.APPLICATION_JSON);  // 인증: "Bearer xxxxx" 형태로 지정
+
+                // 수정된 부분: 매 API 호출 시 최신 토큰을 사용하도록 oAuthTokenService.getAccessToken() 호출
+                String accessToken = oAuthTokenService.getAccessToken();
+                headers.set("authorization", "Bearer " + accessToken);
+
+                headers.set("appkey", appKey);  // 필수 헤더
                 headers.set("appsecret", appSecret);
-                // 문서에서 "tr_id" = HHDFS00000300 (실전/모의투자 공통?), "custtype"=P(개인)
-                headers.set("tr_id", "HHDFS00000300");
-                headers.set("custtype", "P");
+                headers.set("tr_id", "HHDFS00000300"); // "tr_id" = HHDFS00000300 (실전/모의투자 공통?)
+                headers.set("custtype", "P");  //  문서에서 "custtype"=P(개인)
 
                 // 요청 엔티티 생성
                 HttpEntity<Void> requestEntity = new HttpEntity<>(headers);
@@ -113,24 +132,35 @@ public class GlobalStockApiService {
                 // 응답 처리
                 if (responseEntity.getStatusCode() == HttpStatus.OK) {
                     ForeignPriceResponse body = responseEntity.getBody();
-                    if (body != null && "0".equals(body.getRt_cd())) {
-                        // 정상 처리
+
+                    if (body != null && "0".equals(body.getRt_cd())) {  // 정상 처리
                         ForeignPriceOutput output = body.getOutput();
-                        // output.last(현재가), output.rate(등락률) 등 파싱
+
+                        // 방어 코드: last와 rate 값이 null 또는 빈 문자열인지 확인
+                        String lastStr = output.getLast();
+                        String rateStr = output.getRate();
+                        if (lastStr == null || lastStr.trim().isEmpty()) {
+                            log.warn("해외주식 API 응답에서 last 값이 null 또는 빈 문자열입니다. 종목코드: {}", stock.getStockCode());
+                            continue;
+                        }
+                        if (rateStr == null || rateStr.trim().isEmpty()) {
+                            log.warn("해외주식 API 응답에서 rate 값이 null 또는 빈 문자열입니다. 종목코드: {}", stock.getStockCode());
+                            continue;
+                        }
+
                         GlobalDailyStock newData = new GlobalDailyStock();
                         newData.setStockCode(stock.getStockCode());
                         newData.setStockName(stock.getStockName());
                         newData.setExchangeCode(stock.getExchangeCode());
-                        newData.setCurrentPrice(new BigDecimal(output.getLast()));
-                        newData.setChangeRate(new BigDecimal(output.getRate().trim()));
+                        // 앞뒤 공백 제거 후 BigDecimal 생성
+                        newData.setCurrentPrice(new BigDecimal(lastStr.trim()));
+                        newData.setChangeRate(new BigDecimal(rateStr.trim()));
                         newData.setTimestamp(LocalDateTime.now());
 
-                        // DB 저장 (DailyStockService 활용)
-                        dailyStockService.saveGlobalDailyStock(newData);
+                        dailyStockService.saveGlobalDailyStock(newData);  // DB 저장 (DailyStockService 활용)
                         log.info("해외주식 저장 완료: {} ({}), 현재가={}", 
-                                 stock.getStockCode(), stock.getStockName(), output.getLast());
+                                 stock.getStockCode(), stock.getStockName(), lastStr);
                     } else {
-                        // 오류 응답
                         String msg = (body != null) ? body.getMsg1() : "응답 body=null";
                         log.warn("해외주식 API 오류 - 종목코드: {}, msg: {}", stock.getStockCode(), msg);
                     }
@@ -138,7 +168,6 @@ public class GlobalStockApiService {
                     log.error("해외주식 API 호출 실패 - 종목코드: {}, HTTP Status: {}",
                             stock.getStockCode(), responseEntity.getStatusCode());
                 }
-
             } catch (Exception e) {
                 log.error("해외주식 조회 예외 발생 - 종목코드: {}, err: {}", stock.getStockCode(), e.getMessage(), e);
             }
@@ -146,7 +175,7 @@ public class GlobalStockApiService {
     }
 
     /**
-     * 3) 해외 종목 정보 DTO (하드코딩용)
+     * 해외 종목 정보 DTO (하드코딩용)
      */
     @Data
     @AllArgsConstructor
@@ -157,7 +186,7 @@ public class GlobalStockApiService {
     }
 
     /**
-     * 4) 해외 주식 API 응답 구조 (문서에 맞춤)
+     * 해외 주식 API 응답 구조 (문서에 맞춤)
      */
     @Data
     public static class ForeignPriceResponse {

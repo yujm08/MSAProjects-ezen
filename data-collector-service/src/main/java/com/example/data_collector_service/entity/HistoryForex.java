@@ -18,10 +18,6 @@ public class HistoryForex {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // 실시간 데이터 테이블의 id를 참조 (Foreign Key)
-    @Column(name = "daily_forex_id", nullable = false)
-    private Long dailyForexId;
-
     // 통화 코드 (Data Body 키: CUR_CD)
     @Column(name = "currency_code", length = 10, nullable = false)
     private String currencyCode;

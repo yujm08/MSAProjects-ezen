@@ -4,7 +4,18 @@ server:
 spring:
   application:
     name: discoveryservice
+
 eureka:
+  server:
+    enable-self-preservation: false  # 이 설정을 통해 Eureka 서버가 무한히 'self-preservation' 상태에 들어가는 것을 방지
   client:
-    register-with-eureka: true
-    fetch-registry: true
+    register-with-eureka: false  # Eureka 서버는 클라이언트로 등록할 필요 없음.
+    fetch-registry: false  # Eureka 서버는 등록된 서비스 목록을 가져올 필요 없음
+    # 둘 다 false로 해야 하는 이유: 서버가 클라이언트로서 등록되면, 서버가 서버 역할을 하면서 동시에 자신을 등록하는 과정에서 충돌이 발생할 수 있음.
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,env
+

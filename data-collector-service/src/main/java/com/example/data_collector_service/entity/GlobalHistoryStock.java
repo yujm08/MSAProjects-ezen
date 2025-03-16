@@ -18,10 +18,6 @@ public class GlobalHistoryStock {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // 실시간 데이터 테이블의 id를 참조 (Foreign Key)
-    @Column(name = "global_daily_stock_id", nullable = false)
-    private Long globalDailyStockId;
-
     // 종목 코드
     @Column(name = "stock_code", length = 10, nullable = false)
     private String stockCode;
@@ -37,6 +33,10 @@ public class GlobalHistoryStock {
     // 종가
     @Column(name = "closing_price", precision = 10, scale = 4, nullable = false)
     private BigDecimal closingPrice;
+
+    // 변동률 (예: 전일 대비 변동률 %)
+    @Column(name = "change_rate", precision = 5, scale = 2)
+    private BigDecimal changeRate;
 
     // 데이터 수집 날짜 (Unix Timestamp → DATE 변환 필요)
     @Column(name = "timestamp", nullable = false)

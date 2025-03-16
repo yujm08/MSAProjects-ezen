@@ -1,0 +1,19 @@
+server:
+  port: 7001  # Spring Boot 애플리케이션이 실행될 포트 (기본값: 8080)
+
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+
+spring:
+  data:
+    elasticsearch:
+      rest:
+        uris: http://localhost:9200   # Elasticsearch REST API URL
+        headers:
+          Authorization: "Bearer AAEAAWVsYXN0aWMva2liYW5hL215LWtpYmFuYS10b2tlbjpNcEQ4bE1NVVNrNjB0VE1QQWgtM1V3"  # Kibana 토큰 사용
+
+
