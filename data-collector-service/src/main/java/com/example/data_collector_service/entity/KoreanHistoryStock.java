@@ -37,4 +37,14 @@ public class KoreanHistoryStock {
     // 데이터 수집 날짜
     @Column(name = "timestamp", nullable = false)
     private LocalDate timestamp;
+
+    // 날짜 반환 메서드
+    public LocalDate getDate() {
+        return this.timestamp; // timestamp 필드를 반환
+    }
+
+    // 종가 반환 메서드
+    public BigDecimal getClosingPrice() {
+        return this.closingPrice; // closingPrice 필드를 반환
+    }
 }

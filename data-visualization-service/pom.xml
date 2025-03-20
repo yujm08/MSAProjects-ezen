@@ -37,6 +37,11 @@
       <artifactId>spring-boot-starter-data-elasticsearch</artifactId>
     </dependency>
 
+    <dependency>
+      <groupId>co.elastic.clients</groupId>
+      <artifactId>elasticsearch-java</artifactId>
+    </dependency>
+
     <!-- Kafka Connecotr -->
     <dependency>
         <groupId>org.springframework.kafka</groupId>
@@ -84,10 +89,26 @@
 
   <build>
     <plugins>
+      <!-- 테스트 실행 시 JVM 옵션 적용 -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>3.1.2</version>
+        <configuration>
+          <argLine>--add-opens java.base/java.math=ALL-UNNAMED</argLine>
+        </configuration>
+      </plugin>
+
+      <!-- 애플리케이션 실행 시 JVM 옵션 적용 (mvn spring-boot:run) -->
       <plugin>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-maven-plugin</artifactId>
+        <configuration>
+          <jvmArguments>--add-opens java.base/java.math=ALL-UNNAMED</jvmArguments>
+          <mainClass>com.example.data_visualization_service.DataVisualizationServiceApplication</mainClass>
+        </configuration>
       </plugin>
     </plugins>
   </build>
+
 </project>

@@ -1,6 +1,7 @@
 package com.example.data_collector_service.repository;
 
 import java.time.LocalDate;
+import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -13,4 +14,7 @@ public interface GlobalHistoryStockRepository extends JpaRepository<GlobalHistor
 
     // 삭제: 지정 날짜보다 이전의 레코드 삭제 (3달 이상)
     void deleteByTimestampBefore(LocalDate cutoffDate);
+
+    // 특정 주식에 대해 특정 날짜 범위에 해당하는 히스토리 데이터를 조회
+    List<GlobalHistoryStock> findByStockCodeAndTimestampBetween(String stockCode, LocalDate startDate, LocalDate endDate);
 }

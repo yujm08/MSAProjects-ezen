@@ -9,7 +9,7 @@
     <artifactId>community-service</artifactId>
     <version>1.0</version>
     <name>community-service</name>
-    <description>Community Service with Redis Caching & FileEntity</description>
+    <description>Community Service with Redis Caching</description>
 
     <parent>
         <groupId>org.springframework.boot</groupId>
@@ -73,12 +73,6 @@
             <groupId>org.modelmapper</groupId>
             <artifactId>modelmapper</artifactId>
             <version>2.3.8</version>
-        </dependency>
-
-        <!-- Security (선택) -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
 
         <!-- JWT (선택) -->

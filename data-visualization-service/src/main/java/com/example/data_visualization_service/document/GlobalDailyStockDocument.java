@@ -10,8 +10,8 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Document(indexName = "global_stock")
-public class GlobalStockDocument {
+@Document(indexName = "global_daily_stock")
+public class GlobalDailyStockDocument {
     @Id
     private String id;
     private String stockCode;

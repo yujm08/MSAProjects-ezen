@@ -25,6 +25,19 @@ spring:
     show-sql: true
 
 eureka:
+  instance:
+    hostname: localhost  # localhost로 설정하여 모든 서비스가 localhost에서 등록됨
+    ip-address: 127.0.0.1  # 실제 IP 또는 127.0.0.1 사용
+    prefer-ip-address: true  # IP 주소를 우선 등록
+    non-secure-port-enabled: true  # HTTP(기본 8080) 포트 사용
+    secure-port-enabled: false   # HTTPS 사용 안 함
+    instance-id: ${spring.application.name}:${server.port}
+    status-page-url: http://127.0.0.1:7000/actuator/info
+    health-check-url: http://127.0.0.1:7000/actuator/health
+    home-page-url: http://127.0.0.1:7000/
+    metadata-map:
+      protocol: http
+
   client:
     register-with-eureka: true
     fetch-registry: true

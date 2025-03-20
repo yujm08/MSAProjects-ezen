@@ -1,4 +1,16 @@
-package main.java.com.example.community_service.entity;
+package com.example.community_service.entity;
+
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Table(name = "posts")
@@ -13,7 +25,7 @@ public class Posts {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Long userId; // 작성자 ID
+    private UUID userId; // 작성자 ID
 
     @Column(length = 255, nullable = false)
     private String title;
@@ -28,15 +40,15 @@ public class Posts {
 
     // 게시글과 파일은 1:N
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<FileEntity> files = new ArrayList<>();
+    private List<Files> files = new ArrayList<>();
 
     // 댓글 양방향 매핑
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Comment> comments = new ArrayList<>();
+    private List<Files> comments = new ArrayList<>();
 
     // 좋아요
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<PostLike> likes = new ArrayList<>();
+    private List<PostLikes> likes = new ArrayList<>();
 
     @PrePersist
     public void prePersist() {

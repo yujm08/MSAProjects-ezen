@@ -2,6 +2,7 @@ package com.example.data_collector_service.repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -22,4 +23,12 @@ public interface GlobalDailyStockRepository extends JpaRepository<GlobalDailySto
 
     //특정 기간 동안의 모든 주식 데이터를 조회
     List<GlobalDailyStock> findAllByTimestampBetween(LocalDateTime start, LocalDateTime end);
+
+    // 특정 날짜 범위에 해당하는 특정 주식 레코드를 조회
+    List<GlobalDailyStock> findByStockCodeAndTimestampBetween(String stockCode, LocalDateTime start, LocalDateTime end);
+
+    // 특정 거래소에 해당하는 데이터 조회
+    List<GlobalDailyStock> findByExchangeCode(String exchangeCode);
+
+    Optional<GlobalDailyStock> findTopByStockCodeOrderByTimestamp(String stockCode);
 }

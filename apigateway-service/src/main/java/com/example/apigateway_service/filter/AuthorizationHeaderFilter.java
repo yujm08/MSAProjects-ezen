@@ -13,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.stereotype.Component;
+import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -21,15 +22,18 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.Collections;
 
 @Component
 @Slf4j
 public class AuthorizationHeaderFilter extends AbstractGatewayFilterFactory<AuthorizationHeaderFilter.Config> {
+    private final WebClient.Builder webClientBuilder;
     Environment env;
 
-    public AuthorizationHeaderFilter(Environment env) {
+    public AuthorizationHeaderFilter(Environment env, WebClient.Builder webClientBuilder) {
         super(Config.class);
         this.env = env;
+        this.webClientBuilder = webClientBuilder;
     }
 
     public static class Config {
@@ -40,27 +44,34 @@ public class AuthorizationHeaderFilter extends AbstractGatewayFilterFactory<Auth
     public GatewayFilter apply(Config config) {
         return (exchange, chain) -> {
             ServerHttpRequest request = exchange.getRequest();
-            log.debug("Request path: " + request.getPath());  // 추가
-            log.debug("Request method: " + request.getMethod());  // 추가
+            log.debug("Request path: " + request.getPath());  
+            log.debug("Request method: " + request.getMethod());  
 
-            log.debug("========= Request Details ========");
-            log.debug("Path: " + request.getPath());
-            log.debug("Method: " + request.getMethod());
-            log.debug("Headers: " + request.getHeaders());
-            log.debug("===========================");
+            // 1. Authorization 헤더에서 JWT 추출
+            String authorizationHeader = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
+            String jwt = null;
 
-            if (!request.getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) {
-                log.debug("No authorization header found");  // 추가
-                return onError(exchange, "No authorization header", HttpStatus.UNAUTHORIZED);
+            if (authorizationHeader != null) {
+                jwt = authorizationHeader.replace("Bearer ", "");
+            } else {
+                // 2. Authorization 헤더가 없으면 Cookie에서 accessToken 추출
+                jwt = getJwtFromCookie(request);
             }
 
-            String authorizationHeader = request.getHeaders().get(HttpHeaders.AUTHORIZATION).get(0);
-            String jwt = authorizationHeader.replace("Bearer ", "");
-            if (!isJwtValid(jwt)) {
-                return onError(exchange, "JWT token is not valid", HttpStatus.UNAUTHORIZED);
+            // 3. accessToken이 존재하고 유효한 경우 요청 필터링 진행
+            if (jwt != null && isJwtValid(jwt)) {
+                return chain.filter(exchange);
             }
 
-            return chain.filter(exchange);
+            // 4. accessToken이 없거나 유효하지 않은 경우, refreshToken으로 새로운 accessToken 발급
+            String refreshToken = getJwtFromCookie(request); // 쿠키에서 refreshToken 가져오기
+            if (refreshToken != null) {
+                return refreshAccessToken(exchange, refreshToken)
+                        .flatMap(response -> chain.filter(exchange));
+            }
+
+            // 5. refreshToken도 없거나 accessToken 재발급 실패 시, UNAUTHORIZED 응답 반환
+            return onError(exchange, "JWT token is not valid", HttpStatus.UNAUTHORIZED);
         };
     }
 
@@ -98,4 +109,23 @@ public class AuthorizationHeaderFilter extends AbstractGatewayFilterFactory<Auth
         return returnValue;
     }
 
+    // Cookie에서 accessToken을 추출하는 메서드
+    private String getJwtFromCookie(ServerHttpRequest request) {
+        if (request.getCookies().containsKey("accessToken")) {
+            return request.getCookies().getFirst("accessToken").getValue();
+        }
+        return null;
+    }
+
+    // refreshToken을 사용하여 새로운 accessToken을 발급받고, 이를 UserService에 요청하여 전달
+    private Mono<Void> refreshAccessToken(ServerWebExchange exchange, String refreshToken) {
+        return webClientBuilder
+                .build()
+                .post()
+                .uri("https://localhost:8443/user-service/refresh")  // 실제 URL로 변경
+                .bodyValue(Collections.singletonMap("refreshToken", refreshToken))  // 요청 본문에 refreshToken 포함
+                .retrieve()
+                .bodyToMono(String.class)
+                .then();
+    }
 }

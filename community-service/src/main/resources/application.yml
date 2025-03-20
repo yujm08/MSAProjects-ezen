@@ -1,0 +1,63 @@
+server:
+  port: 8082  # 서비스 포트 설정
+
+spring:
+  application:
+    name: community-service  # 서비스 이름 설정
+
+  # 파일 업로드 관련 설정
+  servlet:
+    multipart:
+      max-file-size: 10MB  # 파일 크기 제한
+      max-request-size: 30MB  # 요청 크기 제한
+
+  # 파일 저장 디렉터리 설정
+  file-upload:
+    upload-dir: ./uploads  # 상대 경로로 uploads 폴더 지정 (프로젝트 루트)
+
+  # MariaDB 데이터베이스 연결 설정
+  datasource:
+    url: jdbc:mariadb://localhost:3306/community_db?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=utf8mb4
+    driver-class-name: org.mariadb.jdbc.Driver
+    username: root
+    password: 1234
+
+  # JPA 설정
+  jpa:
+    hibernate:
+      ddl-auto: update  # DB 테이블 자동 업데이트
+    show-sql: true  # SQL 로그 출력
+
+  # H2 콘솔 설정 (테스트용)
+  h2:
+    console:
+      enabled: true  # H2 콘솔 활성화
+      path: /h2-console  # 콘솔 경로 설정
+      settings:
+        web-allow-others: true  # 외부 접속 허용 (개발용)
+
+eureka:
+  instance:
+    hostname: localhost  # localhost로 설정하여 모든 서비스가 localhost에서 등록됨
+    ip-address: 127.0.0.1  # 실제 IP 또는 127.0.0.1 사용
+    prefer-ip-address: true  # IP 주소를 우선 등록
+    non-secure-port-enabled: true  # HTTP(기본 8080) 포트 사용
+    secure-port-enabled: false   # HTTPS 사용 안 함
+    instance-id: ${spring.application.name}:${server.port}
+    status-page-url: http://127.0.0.1:8082/actuator/info
+    health-check-url: http://127.0.0.1:8082/actuator/health
+    home-page-url: http://127.0.0.1:8082/
+    metadata-map:
+      protocol: http
+
+  client:
+    register-with-eureka: true  # Eureka에 서비스 등록
+    fetch-registry: true  # Eureka에서 서비스 정보 조회
+    service-url:
+      defaultZone: http://localhost:8761/eureka/  # Eureka 서버 주소
+  
+# Hibernate SQL and parameter logging
+logging:
+  level:
+    org.hibernate.SQL: DEBUG  # SQL 쿼리 로그 출력
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE  # SQL 파라미터 값 출력

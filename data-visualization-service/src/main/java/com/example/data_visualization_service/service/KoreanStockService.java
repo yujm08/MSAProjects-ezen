@@ -1,7 +1,7 @@
 package com.example.data_visualization_service.service;
 
-import com.example.data_visualization_service.document.KoreanStockDocument;
 import com.example.data_visualization_service.dto.KoreanStockSummaryDTO;
+import com.example.data_visualization_service.document.KoreanDailyStockDocument;
 import com.example.data_visualization_service.document.KoreanHistoryStockDocument;
 import com.example.data_visualization_service.exception.DataNotFoundException;
 import com.example.data_visualization_service.repository.KoreanStockDocumentRepository;
@@ -25,10 +25,10 @@ public class KoreanStockService {
     /**
      * 오늘 00:00부터 현재까지 국내 주식 실시간 데이터 조회
      */
-    public List<KoreanStockDocument> getTodayData(String stockCode) {
+    public List<KoreanDailyStockDocument> getTodayData(String stockCode) {
         LocalDateTime startOfToday = LocalDate.now().atStartOfDay();
         LocalDateTime now = LocalDateTime.now();
-        List<KoreanStockDocument> result = koreanStockRepository.findByStockCodeAndTimestampBetween(stockCode, startOfToday, now);
+        List<KoreanDailyStockDocument> result = koreanStockRepository.findByStockCodeAndTimestampBetween(stockCode, startOfToday, now);
         if(result == null || result.isEmpty()){
             throw new DataNotFoundException("No Korean stock data found for today for stockCode: " + stockCode);
         }
@@ -38,10 +38,10 @@ public class KoreanStockService {
     /**
      * 어제 00:00 ~ 23:59:59 국내 주식 실시간 데이터 조회
      */
-    public List<KoreanStockDocument> getYesterdayData(String stockCode) {
+    public List<KoreanDailyStockDocument> getYesterdayData(String stockCode) {
         LocalDateTime startOfYesterday = LocalDate.now().minusDays(1).atStartOfDay();
         LocalDateTime endOfYesterday = LocalDate.now().minusDays(1).atTime(LocalTime.MAX);
-        List<KoreanStockDocument> result = koreanStockRepository.findByStockCodeAndTimestampBetween(stockCode, startOfYesterday, endOfYesterday);
+        List<KoreanDailyStockDocument> result = koreanStockRepository.findByStockCodeAndTimestampBetween(stockCode, startOfYesterday, endOfYesterday);
         if(result == null || result.isEmpty()){
             throw new DataNotFoundException("No Korean stock data found for yesterday for stockCode: " + stockCode);
         }
@@ -100,7 +100,7 @@ public class KoreanStockService {
     /**
      * 종목 코드를 입력받아 가장 최근 데이터(종가, 변동률, 시간)를 반환
      */
-    public KoreanStockDocument getLatestKoreanStockData(String stockCode) {
+    public KoreanDailyStockDocument getLatestKoreanStockData(String stockCode) {
         return koreanStockRepository.findTopByStockCodeOrderByTimestampDesc(stockCode)
                   .orElseThrow(() -> new DataNotFoundException("No latest Korean stock data found for stockCode: " + stockCode));
     }
@@ -108,7 +108,7 @@ public class KoreanStockService {
     /**
      * 실시간(오늘/어제) 데이터를 Chart.js 포맷으로 변환
      */
-    public Map<String, Object> buildChartDataForTodayOrYesterday(List<KoreanStockDocument> stockList) {
+    public Map<String, Object> buildChartDataForTodayOrYesterday(List<KoreanDailyStockDocument> stockList) {
         if(stockList == null || stockList.isEmpty()){
             throw new DataNotFoundException("No Korean stock data available for chart building.");
         }
@@ -116,9 +116,9 @@ public class KoreanStockService {
         List<BigDecimal> data = new ArrayList<>();
 
         // timestamp 오름차순
-        stockList.sort(Comparator.comparing(KoreanStockDocument::getTimestamp));
+        stockList.sort(Comparator.comparing(KoreanDailyStockDocument::getTimestamp));
 
-        for (KoreanStockDocument doc : stockList) {
+        for (KoreanDailyStockDocument doc : stockList) {
             labels.add(doc.getTimestamp().toString());
             data.add(doc.getCurrentPrice());
         }

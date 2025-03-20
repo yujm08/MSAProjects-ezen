@@ -7,11 +7,24 @@ server:
     key-alias: gatewaylocalssl  # 실제 alias와 동일하게
 
 eureka:
+  instance:
+    hostname: localhost  # localhost로 설정하여 모든 서비스가 localhost에서 등록됨
+    ip-address: 127.0.0.1  # 실제 IP 또는 127.0.0.1 사용
+    prefer-ip-address: true  # IP 주소를 우선 등록
+    non-secure-port-enabled: false  # HTTP 포트 사용 안 함
+    secure-port-enabled: true  # HTTPS 사용
+    instance-id: ${spring.application.name}:${server.port}
+    status-page-url: https://127.0.0.1:8443/actuator/info  # https로 변경
+    health-check-url: https://127.0.0.1:8443/actuator/health  # https로 변경
+    home-page-url: https://127.0.0.1:8443/  # https로 변경
+    metadata-map:
+      protocol: https  # HTTPS 사용으로 변경
+
   client:
-    register-with-eureka: true
-    fetch-registry: true
+    register-with-eureka: true  # Eureka에 서비스 등록
+    fetch-registry: true  # Eureka에서 서비스 정보 조회
     service-url:
-      defaultZone: http://localhost:8761/eureka/
+      defaultZone: http://localhost:8761/eureka/  # Eureka 서버 주소
 
 spring:
   application:
@@ -36,8 +49,15 @@ spring:
               args:
                 X-Forwarded-Proto: https  # HTTPS 프로토콜 전달
       httpclient:
+        wiretap: true  # Wiretap 활성화 (request/response 로그)
         ssl:
           useInsecureTrustManager: true  # self-signed 인증서 신뢰 (개발 환경용)
+      httpserver:
+        wiretap: true  # Wiretap 활성화 (request/response 로그)
+        multipart:
+          max-in-memory-size: 5MB  # 메모리에 저장할 최대 파일 크기
+          max-headers-size: 10KB   # 헤더의 최대 크기
+          max-parts: 100           # multipart 요청의 최대 부분 수
       routes:
         - id: user-service-login
           uri: lb://user-service
@@ -45,8 +65,6 @@ spring:
             - Path=/user-service/login
             - Method=POST
           filters:
-            # 쿠키가 인증에 필요하다면 RemoveRequestHeader=Cookie 필터는 제거하거나 주석처리합니다.
-            #- RemoveRequestHeader=Cookie
             - RewritePath=/user-service/(?<segment>.*), /${segment}
         - id: user-service-users
           uri: lb://user-service
@@ -54,7 +72,6 @@ spring:
             - Path=/user-service/users
             - Method=POST
           filters:
-            #- RemoveRequestHeader=Cookie
             - RewritePath=/user-service/(?<segment>.*), /${segment}
         - id: user-service-get
           uri: lb://user-service
@@ -62,17 +79,87 @@ spring:
             - Path=/user-service/**
             - Method=GET
           filters:
-            #- RemoveRequestHeader=Cookie
             - RewritePath=/user-service/(?<segment>.*), /${segment}
             - AuthorizationHeaderFilter
+        - id: user-service-refresh
+          uri: lb://user-service
+          predicates:
+            - Path=/user-service/refresh
+            - Method=POST
+          filters:
+            - RewritePath=/user-service/(?<segment>.*), /${segment}
+
         - id: data-collector-service-route
           uri: lb://data-collector-service
           predicates:
             - Path=/data-collector-service/**
           filters:
-            #- RemoveRequestHeader=Cookie
             - RewritePath=/data-collector-service/(?<segment>.*), /${segment}
-token: 
+
+        # 게시글과 댓글 관련 라우팅 (파일 업로드 포함)
+        - id: community-service-posts-post
+          uri: lb://community-service
+          predicates:
+            - Path=/api/posts/**
+            - Method=POST
+          filters:
+            - FileUploadHeader  # 파일 업로드가 필요하면 포함
+          metadata:
+            multipart: true
+
+        - id: community-service-posts-put
+          uri: lb://community-service
+          predicates:
+            - Path=/api/posts/**
+            - Method=PUT
+          filters:
+            - AuthorizationHeaderFilter
+            - FileUploadHeader  # 파일 업로드가 필요하면 포함
+          metadata:
+            multipart: true
+            
+        # 댓글 관련 POST 요청 라우팅 (파일 업로드 제외)
+        - id: community-service-comments-post
+          uri: lb://community-service
+          predicates:
+            - Path=/api/comments/**
+            - Method=POST
+          filters:
+            - AuthorizationHeaderFilter
+
+        # 댓글 관련 PUT 요청 라우팅 (파일 업로드 제외)
+        - id: community-service-comments-put
+          uri: lb://community-service
+          predicates:
+            - Path=/api/comments/**
+            - Method=PUT
+          filters:
+            - AuthorizationHeaderFilter
+
+        # 인증되지 않은 사용자는 게시글과 댓글 읽기만 가능
+        - id: community-service-posts-read-only
+          uri: lb://community-service
+          predicates:
+            - Path=/api/posts/**
+            - Method=GET
+          filters:
+            # GET 요청에 대해서 AuthorizationHeaderFilter 필터 제거
+            - name: RemoveRequestHeader
+              args:
+                name: Authorization
+
+        - id: community-service-comments-read-only
+          uri: lb://community-service
+          predicates:
+            - Path=/api/comments/**
+            - Method=GET
+          filters:
+            # GET 요청에 대해서 AuthorizationHeaderFilter 필터 제거
+            - name: RemoveRequestHeader
+              args:
+                name: Authorization
+
+token:
   secret: user_token
 
 logging:

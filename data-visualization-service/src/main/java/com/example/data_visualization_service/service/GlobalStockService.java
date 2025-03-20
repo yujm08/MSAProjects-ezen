@@ -1,6 +1,6 @@
 package com.example.data_visualization_service.service;
 
-import com.example.data_visualization_service.document.GlobalStockDocument;
+import com.example.data_visualization_service.document.GlobalDailyStockDocument;
 import com.example.data_visualization_service.dto.GlobalStockSummaryDTO;
 import com.example.data_visualization_service.document.GlobalHistoryStockDocument;
 import com.example.data_visualization_service.exception.DataNotFoundException;
@@ -26,10 +26,10 @@ public class GlobalStockService {
     /**
      * 오늘 00:00부터 현재까지 해외 주식 실시간 데이터 조회
      */
-    public List<GlobalStockDocument> getTodayData(String stockCode) {
+    public List<GlobalDailyStockDocument> getTodayData(String stockCode) {
         LocalDateTime startOfToday = LocalDate.now().atStartOfDay();
         LocalDateTime now = LocalDateTime.now();
-        List<GlobalStockDocument> result = globalStockRepository.findByStockCodeAndTimestampBetween(stockCode, startOfToday, now);
+        List<GlobalDailyStockDocument> result = globalStockRepository.findByStockCodeAndTimestampBetween(stockCode, startOfToday, now);
         if(result == null || result.isEmpty()){
             throw new DataNotFoundException("No global stock data found for today for stockCode: " + stockCode);
         }
@@ -39,10 +39,10 @@ public class GlobalStockService {
     /**
      * 어제 00:00 ~ 23:59:59 해외 주식 실시간 데이터 조회
      */
-    public List<GlobalStockDocument> getYesterdayData(String stockCode) {
+    public List<GlobalDailyStockDocument> getYesterdayData(String stockCode) {
         LocalDateTime startOfYesterday = LocalDate.now().minusDays(1).atStartOfDay();
         LocalDateTime endOfYesterday = LocalDate.now().minusDays(1).atTime(LocalTime.MAX);
-        List<GlobalStockDocument> result = globalStockRepository.findByStockCodeAndTimestampBetween(stockCode, startOfYesterday, endOfYesterday);
+        List<GlobalDailyStockDocument> result = globalStockRepository.findByStockCodeAndTimestampBetween(stockCode, startOfYesterday, endOfYesterday);
         if(result == null || result.isEmpty()){
             throw new DataNotFoundException("No global stock data found for yesterday for stockCode: " + stockCode);
         }
@@ -92,12 +92,12 @@ public class GlobalStockService {
      * 거래소 코드를 입력받아 해당 거래소에 속한 종목 코드 리스트를 반환
      */
     public List<String> getStockCodesByExchange(String exchangeCode) {
-        List<GlobalStockDocument> docs = globalStockRepository.findByExchangeCode(exchangeCode);
+        List<GlobalDailyStockDocument> docs = globalStockRepository.findByExchangeCode(exchangeCode);
         if(docs == null || docs.isEmpty()){
             throw new DataNotFoundException("No global stock data found for exchangeCode: " + exchangeCode);
         }
         return docs.stream()
-                   .map(GlobalStockDocument::getStockCode)
+                   .map(GlobalDailyStockDocument::getStockCode)
                    .distinct()
                    .collect(Collectors.toList());
     }
@@ -115,7 +115,7 @@ public class GlobalStockService {
     /**
      * 종목(통화) 코드를 입력받아 가장 최근 데이터(종가, 변동률, 시간)를 반환
      */
-    public GlobalStockDocument getLatestGlobalStockData(String stockCode) {
+    public GlobalDailyStockDocument getLatestGlobalStockData(String stockCode) {
         return globalStockRepository.findTopByStockCodeOrderByTimestampDesc(stockCode)
                 .orElseThrow(() -> new DataNotFoundException("No latest global stock data found for stockCode: " + stockCode));
     }
@@ -123,7 +123,7 @@ public class GlobalStockService {
     /**
      * 실시간(오늘/어제) 데이터를 Chart.js 포맷으로 변환
      */
-    public Map<String, Object> buildChartDataForTodayOrYesterday(List<GlobalStockDocument> stockList) {
+    public Map<String, Object> buildChartDataForTodayOrYesterday(List<GlobalDailyStockDocument> stockList) {
         if(stockList == null || stockList.isEmpty()){
             throw new DataNotFoundException("No global stock data available for chart building.");
         }
@@ -131,9 +131,9 @@ public class GlobalStockService {
         List<BigDecimal> data = new ArrayList<>();
 
         // timestamp 오름차순
-        stockList.sort(Comparator.comparing(GlobalStockDocument::getTimestamp));
+        stockList.sort(Comparator.comparing(GlobalDailyStockDocument::getTimestamp));
 
-        for (GlobalStockDocument doc : stockList) {
+        for (GlobalDailyStockDocument doc : stockList) {
             labels.add(doc.getTimestamp().toString());
             data.add(doc.getCurrentPrice());
         }

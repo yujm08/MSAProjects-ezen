@@ -6,6 +6,7 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import javax.crypto.SecretKey;
@@ -13,6 +14,7 @@ import javax.crypto.SecretKey;
 import org.springframework.core.env.Environment;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -99,18 +101,22 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
      * userId(주체)와 roles(권한 목록)로 Authentication 객체를 생성하여 반환.
      */
     private Authentication createAuthentication(String userId, java.util.List roles) {
+        log.info("Assigned roles for user {}: {}", userId, roles);
+        
+        if (roles == null) {
+            roles = List.of("ROLE_USER"); // 기본 역할을 설정하거나 예외를 던질 수 있습니다.
+        }
         var authorities = roles.stream()
-                .map(role -> new SimpleGrantedAuthority(role.toString()))
-                .collect(Collectors.toList());
-
+            .map(role -> new SimpleGrantedAuthority(role.toString()))
+            .collect(Collectors.toList());
         // 생성자를 사용하여 인증된 토큰 생성
         // 첫 번째 파라미터: principal (userId)
         // 두 번째 파라미터: credentials (보안상 null 사용)
         // 세 번째 파라미터: authorities (권한 목록)
         return new UsernamePasswordAuthenticationToken(
-                userId, 
-                null, 
-                (java.util.Collection<? extends org.springframework.security.core.GrantedAuthority>) authorities
+            userId, 
+            null, 
+            (java.util.Collection<? extends GrantedAuthority>) authorities
         );
     }
 }

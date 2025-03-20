@@ -1,4 +1,12 @@
-package main.java.com.example.community_service.entity;
+package com.example.community_service.entity;
+
+import jakarta.persistence.*;
+import lombok.*;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Table(name = "comments")
@@ -16,9 +24,9 @@ public class Comments {
     // 게시글
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "post_id")
-    private Post post;
+    private Posts post;
 
-    private Long userId;
+    private UUID userId;
 
     @Lob
     private String content;
@@ -26,10 +34,10 @@ public class Comments {
     // 대댓글(자기 참조)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_comment_id")
-    private Comment parentComment;
+    private Comments parentComment;
 
     @OneToMany(mappedBy = "parentComment", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Comment> replies = new ArrayList<>();
+    private List<Comments> replies = new ArrayList<>();
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -46,4 +54,3 @@ public class Comments {
         updatedAt = LocalDateTime.now();
     }
 }
-

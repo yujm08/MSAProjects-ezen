@@ -1,5 +1,5 @@
 server:
-  port: 7001  # Spring Boot 애플리케이션이 실행될 포트 (기본값: 8080)
+  port: 7001  # Spring Boot 애플리케이션이 실행될 포트
 
 eureka:
   client:
@@ -9,11 +9,12 @@ eureka:
       defaultZone: http://localhost:8761/eureka/
 
 spring:
+  application:
+    name: data-visualization-service  # Eureka에 등록할 서비스 이름
   data:
     elasticsearch:
       rest:
         uris: http://localhost:9200   # Elasticsearch REST API URL
         headers:
-          Authorization: "Bearer AAEAAWVsYXN0aWMva2liYW5hL215LWtpYmFuYS10b2tlbjpNcEQ4bE1NVVNrNjB0VE1QQWgtM1V3"  # Kibana 토큰 사용
-
+          Authorization:  "Basic ZWxhc3RpYzpmVlR0dipRQj1hOEpaQW91SzBJcg==" # "elastic:fVTtv*QB=a8JZAouK0Ir" 가 인코딩된 문자열 사용
 

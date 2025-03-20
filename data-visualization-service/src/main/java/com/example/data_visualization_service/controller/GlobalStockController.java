@@ -1,6 +1,6 @@
 package com.example.data_visualization_service.controller;
 
-import com.example.data_visualization_service.document.GlobalStockDocument;
+import com.example.data_visualization_service.document.GlobalDailyStockDocument;
 import com.example.data_visualization_service.document.GlobalHistoryStockDocument;
 import com.example.data_visualization_service.service.GlobalStockService;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +24,7 @@ public class GlobalStockController {
      */
     @GetMapping("/today")
     public Map<String, Object> getTodayData(@RequestParam String stockCode) {
-        List<GlobalStockDocument> stockList = globalStockService.getTodayData(stockCode);
+        List<GlobalDailyStockDocument> stockList = globalStockService.getTodayData(stockCode);
         return globalStockService.buildChartDataForTodayOrYesterday(stockList);
     }
 
@@ -33,7 +33,7 @@ public class GlobalStockController {
      */
     @GetMapping("/yesterday")
     public Map<String, Object> getYesterdayData(@RequestParam String stockCode) {
-        List<GlobalStockDocument> stockList = globalStockService.getYesterdayData(stockCode);
+        List<GlobalDailyStockDocument> stockList = globalStockService.getYesterdayData(stockCode);
         return globalStockService.buildChartDataForTodayOrYesterday(stockList);
     }
 
